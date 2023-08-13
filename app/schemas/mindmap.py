@@ -1,4 +1,6 @@
 from pydantic import BaseModel
 
 class MindMap(BaseModel):
-    pass
+    root: int
+    keywords: list[str]
+    graph: dict

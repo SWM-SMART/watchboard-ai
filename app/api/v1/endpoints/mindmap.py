@@ -1,4 +1,4 @@
-from typing import Any
+from typing import Optional
 
 from fastapi import APIRouter, Depends
 
@@ -14,6 +14,8 @@ from app.core.config import (
     S3_PREFIX,
     S3_BUCKET_NAME
 )
+
+import jwt
 
 router = APIRouter()
 

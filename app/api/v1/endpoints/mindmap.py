@@ -15,8 +15,6 @@ from app.core.config import (
     S3_BUCKET_NAME
 )
 
-import jwt
-
 router = APIRouter()
 
 @router.post("/mindmap", response_model=None)

@@ -8,11 +8,11 @@ RUN touch /code/.git
 COPY ./requirements.txt /code/requirements.txt
 
 # install 
-RUN sudo pip3 install -r requirements.txt
+RUN pip3 install --no-cache-dir -r /code/requirements.txt
 
 # run FastAPI
 COPY ./app /code/app
 COPY ./scripts /code/scripts
-RUN sudo chmod +x /code/scripts/run.sh
+RUN chmod +x /code/scripts/run.sh
 
 ENTRYPOINT ["sh", "./scripts/run.sh"]

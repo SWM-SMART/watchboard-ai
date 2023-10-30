@@ -1,139 +1,57 @@
-import networkx as nx
-from itertools import combinations
-import numpy as np
+from fastapi import Depends
+from app.controller.llm import LLMController
+from langchain.schema.document import Document
 
-from app.schemas.context import Context
 from app.schemas.mindmap import MindMap
+from app.schemas.context import Keywords
 
-fields = ['ID', 'FORM', 'LEMMA', 'CPOS', 'POS', 'FEATS', 'HEAD', 'DEPREL', 'PHEAD', 'PDEPREL']
-fields_dict = { field: index for index, field in enumerate(fields) }
+from bs4 import BeautifulSoup
 
-class DependencyGraph:
-    def __init__(self, dep_data):
-        self.dep_data = dep_data
-        self.graph = [[] for i in range(len(dep_data[0]))]
-        self.make_graph()
-
-    def make_graph(self):
-        for i, head in enumerate(self.dep_data[fields_dict['HEAD']]):
-            if head != '_': self.graph[int(head) - 1].append(i)
-
-    def search_graph(self, concept, window_size):
-        res = []
-        here = int(concept)
-        if window_size == 1: return [here]
-        else:
-            res = self.search_graph(concept, window_size-1)
-            for i in range(here - window_size + 1, here + 1):
-                dep = [self.graph[x] for x in range(i, i + window_size)]
-                dep = sum(dep, [])
-
-                window = [x for x in range(i, i + window_size)]
-                ok = True
-                for word in window:
-                    if word != here and word not in dep: ok = False
-                if ok: res = window
-            return res
-        
-    def make_keyword(self, keyword_index):
-        keyword_index.sort()
-        
-        keyword = ""
-        for i, value in enumerate(keyword_index):
-            if self.dep_data[fields_dict['CPOS']][value] == 'PART': continue
-            if i == len(keyword_index)-1 and self.dep_data[fields_dict['CPOS']][value] == 'ADP': break
-            keyword = keyword + self.dep_data[fields_dict['FORM']][value]
-            if i != len(keyword_index)-1 and self.dep_data[fields_dict['PDEPREL']][value] != 'SpaceAfter=No': keyword = keyword + " "
-        return keyword
-
-    def extract_keywords(self, window_size):
-        concepts = [i for i, dep in enumerate(self.dep_data[fields_dict['DEPREL']]) if dep in ['nsubj', 'obj', 'iobj']]
-        
-        keywords = []
-        for concept in concepts:
-            keyword_index = self.search_graph(concept, window_size)
-            keywords.append(self.make_keyword(keyword_index))
-        return keywords
+from typing import List
 
 class MindMapController:
-    def __init__(self, nlp_model, window_size: int = 5):
-        self.graphs: nx.Graph = None
-        self.context = {}
-        self.mindmap: MindMap = MindMap()
-        
-        self.model = nlp_model
-        self.window_size = window_size
+    prompt = "Question: 문맥 내에서 %s들의 계층 구조를 html 문법으로 알려줘 \nAnswer: <html>"
+    def __init__(self, llm: LLMController = Depends(LLMController)):
+        self.llm = llm
 
-    def transform(self, context: Context) -> nx.Graph:
-        self.context["text"] = context.text
-        self.context["words"] = self.preprocess(self.context["text"])
+    def delete_stopwords(self, html: str) -> str:
+        with open('app/static/stopwords.txt') as f:
+            stopwords = f.read().split('\n')
+            for stopword in stopwords:
+                html.replace(stopword, '')
+        return html
 
-        self.context["nouns"] = self.extract_keyword_noun()
-        self.context["index"] = {n: i for i, n in enumerate(self.context["nouns"])}
-        self.graphs = self.make_concept_map()
-        self.mindmap = self.make_concept_tree()
-        return self.mindmap
+    def parse_html(self, html: str, keywords: List[str]) -> MindMap:
+        mindmap = MindMap()
+        mindmap.keywords = keywords
+        keyword2index = {w: i for i, w in enumerate(keywords)}
 
-    def preprocess(self, context: str) -> list:
-        # apply kss code after making mst baseline
-        stop_words = ["<p>", "</p>", "<h1>", "</h1>", "<h2>", "</h2>", "<h3>", "</h3>", "\\", "(", ")", "Fig.", "fig.", "Fig", "fig", "Table", "table", "mathrm"]
+        soup = BeautifulSoup(html, 'html.parser')
+        prettified_html = soup.prettify()
+        prettified_html = list(map(lambda x: x.strip(), prettified_html.split('\n')))
+        prettified_html = [html for html in prettified_html if (html in keywords) or (html in ['<ul>', '</ul>'])]
 
-        for word in stop_words:
-            context = context.replace(word, '')
-        preprocessed_context = self.model(context).values
-        return preprocessed_context
-    
-    def extract_keyword_noun(self) -> list:
-        dg = DependencyGraph(self.context["words"])
-        return list(set(dg.extract_keywords(window_size=3)))
-    
-    def make_concept_map(self) -> nx.Graph:
-        G = nx.Graph()
+        stack = []
+        for index, word in enumerate(prettified_html):
+            if word == '</ul>': stack.pop(len(stack)-1)
+            if word in keywords:
+                if len(stack) == 0:
+                    stack.append(word)
+                    mindmap.root = keyword2index[stack[0]]
+                else:
+                    if prettified_html[index-1] != '<ul>': stack.pop(len(stack)-1)
+                    key = str(keyword2index[mindmap.root]) if len(stack) == 0 else str(keyword2index[stack[len(stack)-1]])
 
-        nouns = self.context["nouns"]
-        context = self.context["words"]
-        for i, word in enumerate(nouns):
-            G.add_nodes_from([(word, {'freq': 0, 'offsets': []})])
+                    if key not in mindmap.graph.keys():
+                        mindmap.graph[key] = [keyword2index[word]]
+                    else:
+                        mindmap.graph[key].append(keyword2index[word])
+                    stack.append(word)
+        return mindmap
 
-        for i, word in enumerate(context[fields_dict['FORM']]):
-            if word not in nouns: continue
-
-            offsets = G.nodes[word]['offsets']
-            offsets.append((i, i+1))
-            G.add_nodes_from([word], offsets=offsets)
-            G.add_nodes_from([word], freq=len(G.nodes[word]['offsets']))
-
-        for i in range(len(context[1])-self.window_size):
-            here_data = [data for data in context[1][i:i+self.window_size] if data in nouns]
-            here_data_comb = list(combinations(here_data, 2))
-
-            for first, second in here_data_comb:
-                G.add_edge(first, second) 
-        return G
-
-    def make_concept_tree(self) -> MindMap:
-        ret = MindMap()
-
-        max_node = np.argmax([self.graphs.nodes[_]['freq'] for _ in self.graphs.nodes()])
-        ret.root = str(max_node)
-        ret.keywords = self.context["nouns"]
-
-        max_node = self.context["nouns"][max_node]
-        tree = nx.bfs_tree(self.graphs, max_node, depth_limit=3)
-        
-        q = [max_node]
-        while len(q) != 0:
-            here = q.pop(0)
-            here_index = self.context["index"][here]
-            if tree.neighbors(here) != None:
-                ret.graph[here_index] = []
-
-            for next in tree.neighbors(here):
-                q.append(next)
-
-                next_index = self.context["index"][next]
-                ret.graph[here_index].append(next_index)
-        return ret
-
-    def clean(self):
-        self.graphs = []
+    def get_mindmap(self, document: Document, keywords: List[str]) -> MindMap:
+        self.llm.set_document(document)
+        answer = self.llm.request(self.prompt % keywords).content
+        print(answer)
+        answer = self.delete_stopwords(answer)
+        return self.parse_html(answer, keywords)

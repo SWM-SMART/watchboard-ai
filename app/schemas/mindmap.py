@@ -1,6 +1,9 @@
+from typing import List
 from pydantic import BaseModel
 
+from app.schemas.context import Keywords
+
 class MindMap(BaseModel):
-    root: str = '0'
-    keywords: list[str] = []
+    root: str = ""
+    keywords: Keywords = []
     graph: dict = {}

@@ -15,4 +15,4 @@ COPY ./app /code/app
 COPY ./scripts /code/scripts
 RUN chmod +x /code/scripts/run.sh
 
-ENTRYPOINT ["sh", "./scripts/run.sh"]
+ENTRYPOINT ["./scripts/run.sh"]

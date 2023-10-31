@@ -3,7 +3,6 @@ FROM python:3.11
 RUN apt-get update
 
 # copy code
-WORKDIR /code
 RUN touch /code/.git
 COPY ./requirements.txt /code/requirements.txt
 

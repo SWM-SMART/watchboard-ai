@@ -46,16 +46,17 @@ jobs:
   deploy:
     needs: build
     name: Deploy
-    runs-on: [ self-hosted, label-ai ]
+    runs-on: ubuntu-latest
     steps:
-      - name: Login to ghcr
-        uses: docker/login-action@v1
+      - name: Deploy with AWS SSM Send-Command
+        uses: peterkimzz/aws-ssm-send-command@v1.1.1
+        id: ssm
         with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GHCR_TOKEN }}
-      
-      - name: Docker run
-        run: |
-          docker stop ${{ env.NAME }} && docker rm ${{ env.NAME }} && docker rmi ${{ env.DOCKER_IMAGE }}:latest
-          docker run -d -p 3000:3000 --name newproject --restart always ${{ env.DOCKER_IMAGE }}:latest
+          aws-region: ${{ secrets.AWS_REGION }}
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          instance-ids: ${{ secrets.INSTANCE_ID }}
+          working-directory: /usr/bin
+          command: |
+            docker stop ${{ env.NAME }} && docker rm ${{ env.NAME }} && docker rmi ${{ env.DOCKER_IMAGE }}:latest
+            docker run -d -p 3000:3000 --name newproject --restart always ${{ env.DOCKER_IMAGE }}:latest

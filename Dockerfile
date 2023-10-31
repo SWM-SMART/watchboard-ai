@@ -1,12 +1,12 @@
-FROM python:3.11
+FROM python:3.11.1
 
-RUN apt-get update
+WORKDIR /code
 
 # copy code
 COPY ./requirements.txt /code/requirements.txt
 
 # install 
-RUN pip3 install --no-cache-dir -r /code/requirements.txt
+RUN pip install --no-cache-dir -r /code/requirements.txt
 
 # run FastAPI
 COPY ./app /code/app

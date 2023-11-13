@@ -10,7 +10,7 @@ from bs4 import BeautifulSoup
 from typing import List
 
 class MindMapController:
-    prompt = "Question: 문맥 내에서 %s들의 계층 구조를 html 문법으로 알려줘 \nAnswer: <html>"
+    prompt = "Question: 문맥 내에서 %s들의 계층 구조를 html의 <ul>, <li>로 알려줘 \nAnswer: <html>"
     def __init__(self, llm: LLMController = Depends(LLMController)):
         self.llm = llm
 

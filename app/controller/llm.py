@@ -11,7 +11,7 @@ class LLMController:
     def __init__(self):
         self.embeddings = OpenAIEmbeddings()
         self.rag_prompt = hub.pull("rlm/rag-prompt")
-        self.llm = ChatOpenAI(model_name="gpt-4-0613", temperature=0)
+        self.llm = ChatOpenAI(model_name="gpt-4-1106-preview", temperature=0)
 
     def set_document(self, document: Document) -> None:
         text_splitter = CharacterTextSplitter(chunk_size=1000, chunk_overlap=50)

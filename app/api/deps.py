@@ -4,6 +4,7 @@ from app.controller.llm import LLMController
 from app.controller.mindmap import MindMapController
 from app.controller.keywords import KeywordsController
 from app.controller.summary import SummaryController
+from app.controller.stt import STTController
 
 from transformers import AutoTokenizer, AutoModelForSeq2SeqLM
 
@@ -21,9 +22,10 @@ from fastapi import Depends
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 mindmap_controller: Optional[MindMapController] = None
 summary_model: Optional[AutoTokenizer] = None
+stt_controller: Optional[STTController] = None
 
 def init_model() -> None:
-    global summary_model, summary_tokenizer, summary_controller, llm_controller, mindmap_controller, keyword_controller, s3_controller
+    global summary_model, summary_tokenizer, summary_controller, llm_controller, mindmap_controller, keyword_controller, s3_controller, stt_controller
     
     nltk.download('punkt')
     summary_model = AutoModelForSeq2SeqLM.from_pretrained(SUMMARY_MODEL_PATH)
@@ -40,6 +42,7 @@ def init_model() -> None:
             aws_access_key_id=AWS_ACCESS_KEY_ID,
             aws_secret_access_key=AWS_SECRET_ACCESS_KEY,
         )
+    stt_controller = STTController()
     
 
 def get_summary_model() -> AutoModelForSeq2SeqLM:
@@ -57,14 +60,8 @@ def get_summary_controller(
         summary_controller = SummaryController(model, tokenizer)
     return summary_controller
 
-def get_llm_controller() -> LLMController():
-    return llm_controller
-
-def get_mindmap_controller() -> MindMapController():
-    return mindmap_controller
-
-def get_keyword_controller() -> KeywordsController():
-    return keyword_controller
-
 def get_s3_controller():
     return s3_controller
+
+def get_stt_controller() -> STTController:
+    return stt_controller

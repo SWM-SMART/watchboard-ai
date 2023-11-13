@@ -1,10 +1,8 @@
 from typing import List
 from pydantic import BaseModel
 
-from app.schemas.database import DatabaseInfo
-from app.schemas.context import Keywords
-
 class Document(BaseModel):
-    dbInfo: DatabaseInfo
+    key: str = ""
+    dbType: str = ""
     keywords: List[str]
     documentId: int = 0

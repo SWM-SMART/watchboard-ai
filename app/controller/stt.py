@@ -9,15 +9,15 @@ class STTController:
         pass
 
     def convert_to_wav(self, prefix):
-        output_path = f'stt/static/{prefix}.wav'        
-        y, sr = librosa.load(f'stt/static/{prefix}.m4a', sr=16000)
+        output_path = f'app/static/{prefix}.wav'        
+        y, sr = librosa.load(f'app/static/{prefix}.m4a', sr=16000)
         sf.write(output_path, y, sr)
 
     def speech_to_text(self, prefix):
-        os.system(f'./stt/whisper/main -m ./stt/whisper/models/ggml-medium.bin -l "ko" -f ./stt/static/{prefix}.wav -oj')
+        os.system(f'./app/whisper/main -m ./app/whisper/models/ggml-medium.bin -l "ko" -f ./app/static/{prefix}.wav -oj')
 
     def get_speech_text(self, prefix):
-        with open(f'stt/static/{prefix}.wav.json', 'r') as json_file:
+        with open(f'app/static/{prefix}.wav.json', 'r') as json_file:
             json_data = json.load(json_file)
 
         text = ""

@@ -20,7 +20,7 @@ def get_speech_to_text(
     ) -> SpeechText:
 
     prefix = '.'.join(audio.key.split('.')[:-1])
-    s3_controller.download_file(S3_BUCKET_NAME, AUDIO_S3_PREFIX + audio.key, f'stt/static/{audio.key}')
+    s3_controller.download_file(S3_BUCKET_NAME, AUDIO_S3_PREFIX + audio.key, f'app/static/{audio.key}')
 
     stt_controller.convert_to_wav(prefix)
     stt_controller.speech_to_text(prefix)

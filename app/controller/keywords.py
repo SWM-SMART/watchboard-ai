@@ -12,4 +12,4 @@ class KeywordsController:
     def get_keywords(self, document: Document) -> Keywords:
         self.llm.set_document(document)
         answer = self.llm.request(self.prompt).content
-        return Keywords(keywords=list(map(lambda word: word.strip()[1:-1], list(answer[1:-1].split(',')))))
+        return Keywords(keywords=list(map(lambda word: word.strip(), list(answer[1:-1].split(',')))))

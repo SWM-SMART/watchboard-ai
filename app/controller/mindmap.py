@@ -5,12 +5,12 @@ from langchain.schema.document import Document
 from app.schemas.mindmap import MindMap
 from app.schemas.context import Keywords
 
-from bs4 import BeautifulSoup
+import re
 
 from typing import List
 
 class MindMapController:
-    prompt = "Question: 문맥 내에서 %s들의 계층 구조를 html의 <ul>, <li>로 알려줘 \nAnswer: <html>"
+    prompt = "Question: 문맥 내에서 %s들의 계층 구조를 MarkDown의 '-'로 알려줘 \nAnswer: -"
     def __init__(self, llm: LLMController = Depends(LLMController)):
         self.llm = llm
 
@@ -21,32 +21,36 @@ class MindMapController:
                 html.replace(stopword, '')
         return html
 
-    def parse_html(self, html: str, keywords: List[str]) -> MindMap:
+    def parse_html(self, markdown: str, keywords: List[str]) -> MindMap:
         mindmap = MindMap()
         mindmap.keywords = keywords
-        keyword2index = {w: i for i, w in enumerate(keywords)}
+        keyword2index = {v: i for i, v in enumerate(keywords)}
 
-        soup = BeautifulSoup(html, 'html.parser')
-        prettified_html = soup.prettify()
-        prettified_html = list(map(lambda x: x.strip(), prettified_html.split('\n')))
-        prettified_html = [html for html in prettified_html if (html in keywords) or (html in ['<ul>', '</ul>'])]
-
+        current = 0
         stack = []
-        for index, word in enumerate(prettified_html):
-            if word == '</ul>': stack.pop(len(stack)-1)
+        lines = markdown.split('\n')
+        for line in lines:
+            sep = line.split('- ')[0]
+            word = line.split('- ')[-1]
             if word in keywords:
-                if len(stack) == 0:
-                    stack.append(word)
-                    mindmap.root = keyword2index[stack[0]]
-                else:
-                    if prettified_html[index-1] != '<ul>': stack.pop(len(stack)-1)
-                    key = str(keyword2index[mindmap.root]) if len(stack) == 0 else str(keyword2index[stack[len(stack)-1]])
+                sep = len(sep)
+                mindmap.graph[str(keyword2index[word])] = []
+                print(stack)
 
-                    if key not in mindmap.graph.keys():
-                        mindmap.graph[key] = [keyword2index[word]]
-                    else:
-                        mindmap.graph[key].append(keyword2index[word])
-                    stack.append(word)
+                if sep == 0:
+                    mindmap.root = sep
+        
+                if current == sep:
+                    if len(stack) != 0: stack.pop()
+                    if len(stack) != 0: mindmap.graph[str(stack[-1])].append(keyword2index[word])
+                    stack.append(keyword2index[word])
+                elif current < sep:
+                    mindmap.graph[str(stack[-1])].append(keyword2index[word])
+                    stack.append(keyword2index[word])
+                else:
+                    stack.pop()
+                    if len(stack) != 0: mindmap.graph[str(stack[-1])].append(keyword2index[word])
+                current = sep
         return mindmap
 
     def get_mindmap(self, document: Document, keywords: List[str]) -> MindMap:

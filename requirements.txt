@@ -7,10 +7,8 @@ attrs==23.1.0
 audioread==3.0.1
 backoff==2.2.1
 bcrypt==4.0.1
-beautifulsoup4==4.12.2
-boto3==1.28.84
-botocore==1.31.84
-bs4==0.0.1
+boto3==1.28.85
+botocore==1.31.85
 cachetools==5.3.2
 certifi==2023.7.22
 cffi==1.16.0
@@ -47,8 +45,8 @@ jsonpatch==1.33
 jsonpointer==2.4
 kubernetes==28.1.0
 langchain==0.0.335
-langchainhub==0.1.13
-langsmith==0.0.63
+langchainhub==0.1.14
+langsmith==0.0.64
 lazy_loader==0.3
 librosa==0.10.1
 llvmlite==0.41.1
@@ -65,7 +63,7 @@ numba==0.58.1
 numpy==1.26.2
 oauthlib==3.2.2
 onnxruntime==1.16.2
-openai==1.2.3
+openai==1.2.4
 opentelemetry-api==1.21.0
 opentelemetry-exporter-otlp-proto-common==1.21.0
 opentelemetry-exporter-otlp-proto-grpc==1.21.0
@@ -82,8 +80,8 @@ pulsar-client==3.3.0
 pyasn1==0.5.0
 pyasn1-modules==0.3.0
 pycparser==2.21
-pydantic==2.4.2
-pydantic_core==2.10.1
+pydantic==2.5.0
+pydantic_core==2.14.1
 pypdf==3.17.0
 PyPika==0.48.9
 python-dateutil==2.8.2
@@ -100,7 +98,6 @@ scipy==1.11.3
 six==1.16.0
 sniffio==1.3.0
 soundfile==0.12.1
-soupsieve==2.5
 soxr==0.3.7
 SQLAlchemy==2.0.23
 starlette==0.27.0

@@ -22,3 +22,6 @@ class Segment(BaseModel):
 class SpeechText(BaseModel):
     segments: List[Segment]
     text: str
+
+class QuestionText(BaseModel):
+    text: str

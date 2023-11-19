@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 
 from app.schemas.database import DatabaseInfo
 from app.schemas.context import Keywords
@@ -7,12 +7,10 @@ from app.controller.keywords import KeywordsController
 from app.api.deps import get_s3_controller
 import botocore
 from langchain.document_loaders import PyPDFLoader, TextLoader
-
 from app.core.config import (
     S3_PREFIX,
     S3_BUCKET_NAME
 )
-
 router = APIRouter()
 
 @router.post("/keywords", response_model=None)
@@ -32,4 +30,5 @@ def get_keywords(
         loader = TextLoader(f'app/static/{db.key}')
         
     doc = loader.load_and_split()
+    if len(doc) == 0: return HTTPException(status_code=404, detail="Error")
     return keyword_controller.get_keywords(doc)

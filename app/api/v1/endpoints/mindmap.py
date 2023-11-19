@@ -1,6 +1,6 @@
 from typing import Optional
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 
 from app.controller.llm import LLMController
 from app.controller.mindmap import MindMapController
@@ -34,6 +34,7 @@ def get_mind_map(
     else:
         loader = TextLoader(f'app/static/{document.key}')
     doc = loader.load_and_split()
+    if len(doc) == 0: return HTTPException(status_code=404, detail="Error")
     ret = mindmap_controller.get_mindmap(doc, document.keywords)
     print(ret)
     return ret

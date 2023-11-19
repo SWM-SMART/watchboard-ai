@@ -10,7 +10,7 @@ class STTController:
 
     def convert_to_wav(self, prefix):
         output_path = f'app/static/{prefix}.wav'        
-        y, sr = librosa.load(f'app/static/{prefix}.m4a', sr=16000)
+        y, sr = librosa.load(f'app/static/{prefix}.mp3', sr=16000)
         sf.write(output_path, y, sr)
 
     def speech_to_text(self, prefix):

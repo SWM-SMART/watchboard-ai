@@ -25,16 +25,12 @@ summary_model: Optional[AutoTokenizer] = None
 stt_controller: Optional[STTController] = None
 
 def init_model() -> None:
-    global summary_model, summary_tokenizer, summary_controller, llm_controller, mindmap_controller, keyword_controller, s3_controller, stt_controller
+    global summary_model, summary_tokenizer, summary_controller, s3_controller, stt_controller
     
     nltk.download('punkt')
     summary_model = AutoModelForSeq2SeqLM.from_pretrained(SUMMARY_MODEL_PATH)
     summary_tokenizer = AutoTokenizer.from_pretrained(SUMMARY_MODEL_PATH)
     summary_controller = SummaryController(summary_model, summary_tokenizer)
-
-    llm_controller = LLMController()
-    mindmap_controller = MindMapController(llm_controller)
-    keyword_controller = KeywordsController(llm_controller)
     
     s3_controller = boto3.client(
             service_name="s3",
